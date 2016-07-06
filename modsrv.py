@@ -16,13 +16,17 @@ log = logging.getLogger()
 log.setLevel(logging.DEBUG)
 
 # For GPIO http://www.raspberrypi-spy.co.uk/wp-content/uploads/2012/06/Raspberry-Pi-GPIO-Layout-Model-B-Plus-rotated-2700x900.png
+# GPI = Discrete input
+# GPO = Coil
 #   1  2  3  4  5  6  7  8  9 10    0 = Don't set, 1 = GPI (low), 2 = GPI (high), 3 = GPO (low), 4 = GPO (high)
 GPIO_TABLE = [ 0,
     0, 2, 2, 2, 2, 2, 2, 2, 2, 2,   # +  0
     2, 2, 2, 0, 0, 2, 2, 2, 2, 2,   # + 10, 14 = TX, 15 = RX
     2, 2, 2, 2, 2, 2, ]             # + 20
-REGISTER = 3
 COIL = 1
+DISCRETE_INPUTS = 2
+HOLDING_REGISTERS = 3
+INPUT_REGISTERS = 4
 SLAVE_ID = 0x00
 OLD_GPIO = [0] * len(GPIO_TABLE)
 
@@ -32,26 +36,28 @@ def get_gpio(context):
             v = GPIO.input(i)
             if v != OLD_GPIO[i]:
                 log.info('GPI %d : %d => %d', i, OLD_GPIO[i], v)
-                context[SLAVE_ID].setValues(COIL, i, [v, ])
+                context[SLAVE_ID].setValues(DISCRETE_INPUTS, i, [v, ])
                 OLD_GPIO[i] = v
 
 def set_gpio(context):
     for i in range(1, len(GPIO_TABLE)):
         if GPIO_TABLE[i] == 3 or GPIO_TABLE[i] == 4:
             v = context[SLAVE_ID].getValues(COIL, i, 1)
-            if v != OLD_GPIO[i]:
-                log.info('GPO %d : %d => %d', i, OLD_GPIO[i], v)
+            if v != GPIO_TABLE[i] + 3:          # 3 = GPO (low)
+                log.info('Set GPO %d : %d => %d', i, GPIO_TABLE[i], v)
                 GPIO.output(i, v)
-                OLD_GPIO[i] = v
+                GPIO_TABLE[i] = v + 3
 
 def updating_writer(a):
     log.debug("updating the context")
     context  = a[0]
     address  = 0x00
-    values   = context[SLAVE_ID].getValues(COIL, 0, count=len(GPIO_TABLE))
     get_gpio(context)
-    log.debug("Coil values: " + str(values))
     set_gpio(context)
+    values   = context[SLAVE_ID].getValues(DISCRETE_INPUTS, 0, count=len(GPIO_TABLE))
+    log.debug("DI values: " + str(values))
+    values   = context[SLAVE_ID].getValues(COIL, 0, count=len(GPIO_TABLE))
+    log.debug("Coil values: " + str(values))
 
 
 # Set GPIO
@@ -88,5 +94,4 @@ identity.MajorMinorRevision = '1.0'
 time = 5
 loop = LoopingCall(f=updating_writer, a=(context,))
 loop.start(time, now=False) # initially delay by time
-StartTcpServer(context, identity=identity, address=("localhost", 502))
-
+StartTcpServer(context, identity=identity, address=('0.0.0.0', 502))
