@@ -20,7 +20,7 @@ log.setLevel(logging.DEBUG)
 # GPO = Coil
 #   1  2  3  4  5  6  7  8  9 10    0 = Don't set, 1 = GPI (low), 2 = GPI (high), 3 = GPO (low), 4 = GPO (high)
 GPIO_TABLE = [ 0,
-    0, 2, 2, 2, 2, 2, 2, 2, 2, 2,   # +  0
+    0, 2, 2, 2, 2, 2, 2, 3, 2, 4,   # +  0
     2, 2, 2, 0, 0, 2, 2, 2, 2, 2,   # + 10, 14 = TX, 15 = RX
     2, 2, 2, 2, 2, 2, ]             # + 20
 COIL = 1
@@ -43,6 +43,7 @@ def set_gpio(context):
     for i in range(1, len(GPIO_TABLE)):
         if GPIO_TABLE[i] == 3 or GPIO_TABLE[i] == 4:
             v = context[SLAVE_ID].getValues(COIL, i, 1)
+            v = v[0]
             if v != GPIO_TABLE[i] + 3:          # 3 = GPO (low)
                 log.info('Set GPO %d : %d => %d', i, GPIO_TABLE[i], v)
                 GPIO.output(i, v)
@@ -68,8 +69,8 @@ for i in range(len(GPIO_TABLE)):
     if v == 0:   continue
     elif v == 1: GPIO.setup(i, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
     elif v == 2: GPIO.setup(i, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    elif v == 3: GPIO.setup(i, GPIO.OUT, pull_up_down=GPIO.PUD_DOWN)
-    elif v == 4: GPIO.setup(i, GPIO.OUT, pull_up_down=GPIO.PUD_UP)
+    elif v == 3: GPIO.setup(i, GPIO.OUT, initial=GPIO.LOW)
+    elif v == 4: GPIO.setup(i, GPIO.OUT, initial=GPIO.HIGH)
     else:
         raise ValueError, "Invalid GPIO setup, pin %d" % i
 
