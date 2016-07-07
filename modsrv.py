@@ -39,14 +39,14 @@ def dump_store(a):
     log.debug("Coil values: " + str(values))
 
 
-def gpi_edge(i):
-    if GPIO_TABLE[i] == 1 or GPIO_TABLE[i] == 2:
-        v = GPIO.input(i)
-        log.info('GPI %d : %d => %d', i, OLD_GPIO[i], v)
-        context[SLAVE_ID].setValues(DISCRETE_INPUTS, i, [v, ])
-        OLD_GPIO[i] = v
-    else:
-        log.info('Weird edge triggered in GPI %d', i)
+def scan_gpi():
+    for i in range(len(OLD_GPIO)):
+        if GPIO_TABLE[i] == 1 or GPIO_TABLE[i] == 2:
+            v = GPIO.input(i)
+            if v != OLD_GPIO[i]:
+                log.info('GPI %d : %d => %d', i, OLD_GPIO[i], v)
+                context[SLAVE_ID].setValues(DISCRETE_INPUTS, i, [v, ])
+                OLD_GPIO[i] = v
 
 
 def set_gpo(pin, v):
@@ -74,11 +74,9 @@ for i in range(len(GPIO_TABLE)):
         continue
     elif v == 1:
         GPIO.setup(i, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-        GPIO.add_event_detect(i, GPIO.BOTH, callback=gpi_edge, bouncetime=50)  
         OLD_GPIO[i] = 0
     elif v == 2: 
         GPIO.setup(i, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        GPIO.add_event_detect(i, GPIO.BOTH, callback=gpi_edge, bouncetime=50)  
         OLD_GPIO[i] = 1
     elif v == 3:
         GPIO.setup(i, GPIO.OUT, initial=GPIO.LOW)
@@ -108,7 +106,8 @@ identity.ModelName   = 'PLC'
 identity.MajorMinorRevision = '1.0'
 
 # Start loop
-time = 3
 loop = LoopingCall(f=dump_store, a=(context,))
-loop.start(time, now=True)
+loop.start(3, now=True)
+loop_scan_gpi = LoopingCall(f=scan_gpi)
+loop_scan_gpi.start(0.1, now=True)
 StartTcpServer(context, identity=identity, address=('0.0.0.0', 502))
