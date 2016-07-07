@@ -20,7 +20,7 @@ log.setLevel(logging.DEBUG)
 # GPO = Coil
 #   1  2  3  4  5  6  7  8  9 10    0 = Don't set, 1 = GPI (low), 2 = GPI (high), 3 = GPO (low), 4 = GPO (high)
 GPIO_TABLE = [ 0,
-    0, 2, 2, 2, 2, 2, 2, 3, 2, 4,   # +  0
+    0, 1, 2, 2, 2, 2, 2, 3, 2, 4,   # +  0
     2, 2, 2, 0, 0, 2, 2, 2, 2, 2,   # + 10, 14 = TX, 15 = RX
     2, 2, 2, 2, 2, 2, ]             # + 20
 COIL = 1
@@ -29,31 +29,22 @@ HOLDING_REGISTERS = 3
 INPUT_REGISTERS = 4
 SLAVE_ID = 0x00
 OLD_GPIO = [0] * len(GPIO_TABLE)
-
-def get_gpio(context):
-    for i in range(1, len(GPIO_TABLE)):
-        if GPIO_TABLE[i] == 1 or GPIO_TABLE[i] == 2:
-            v = GPIO.input(i)
-            if v != OLD_GPIO[i]:
-                log.info('GPI %d : %d => %d', i, OLD_GPIO[i], v)
-                context[SLAVE_ID].setValues(DISCRETE_INPUTS, i, [v, ])
-                OLD_GPIO[i] = v
+GPO_SHIFT = 3
 
 def set_gpio(context):
     for i in range(1, len(GPIO_TABLE)):
         if GPIO_TABLE[i] == 3 or GPIO_TABLE[i] == 4:
             v = context[SLAVE_ID].getValues(COIL, i, 1)
             v = v[0]
-            if v != GPIO_TABLE[i] + 3:          # 3 = GPO (low)
+            if v != GPIO_TABLE[i] + GPO_SHIFT:
                 log.info('Set GPO %d : %d => %d', i, GPIO_TABLE[i], v)
                 GPIO.output(i, v)
-                GPIO_TABLE[i] = v + 3
+                GPIO_TABLE[i] = v + GPO_SHIFT
 
 def updating_writer(a):
     log.debug("updating the context")
     context  = a[0]
     address  = 0x00
-    get_gpio(context)
     set_gpio(context)
     values   = context[SLAVE_ID].getValues(DISCRETE_INPUTS, 0, count=len(GPIO_TABLE))
     log.debug("DI values: " + str(values))
@@ -61,16 +52,37 @@ def updating_writer(a):
     log.debug("Coil values: " + str(values))
 
 
+def gpi_edge(i):
+    if GPIO_TABLE[i] == 1 or GPIO_TABLE[i] == 2:
+        v = GPIO.input(i)
+        log.info('GPI %d : %d => %d', i, OLD_GPIO[i], v)
+        context[SLAVE_ID].setValues(DISCRETE_INPUTS, i, [v, ])
+        OLD_GPIO[i] = v
+    else:
+        log.info('Weird edge triggered in GPI %d', i)
+
+
 # Set GPIO
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 for i in range(len(GPIO_TABLE)):
     v = GPIO_TABLE[i]
-    if v == 0:   continue
-    elif v == 1: GPIO.setup(i, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    elif v == 2: GPIO.setup(i, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    elif v == 3: GPIO.setup(i, GPIO.OUT, initial=GPIO.LOW)
-    elif v == 4: GPIO.setup(i, GPIO.OUT, initial=GPIO.HIGH)
+    if v == 0:
+        continue
+    elif v == 1:
+        GPIO.setup(i, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        GPIO.add_event_detect(i, GPIO.BOTH, callback=gpi_edge, bouncetime=50)  
+        OLD_GPIO[i] = 0
+    elif v == 2: 
+        GPIO.setup(i, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.add_event_detect(i, GPIO.BOTH, callback=gpi_edge, bouncetime=50)  
+        OLD_GPIO[i] = 1
+    elif v == 3:
+        GPIO.setup(i, GPIO.OUT, initial=GPIO.LOW)
+        OLD_GPIO[i] = GPO_SHIFT
+    elif v == 4:
+        GPIO.setup(i, GPIO.OUT, initial=GPIO.HIGH)
+        OLD_GPIO[i] = GPO_SHIFT + 1
     else:
         raise ValueError, "Invalid GPIO setup, pin %d" % i
 
@@ -81,6 +93,7 @@ store = ModbusSlaveContext(
     hr = ModbusSequentialDataBlock(0, [0]*100),
     ir = ModbusSequentialDataBlock(0, [0]*100))
 context = ModbusServerContext(slaves=store, single=True)
+context[0].setValues(DISCRETE_INPUTS, 0, [(1 if x == 1 else 0) for x in OLD_GPIO])
 
 # Set identification
 identity = ModbusDeviceIdentification()
@@ -94,5 +107,5 @@ identity.MajorMinorRevision = '1.0'
 # Start loop
 time = 5
 loop = LoopingCall(f=updating_writer, a=(context,))
-loop.start(time, now=False) # initially delay by time
+loop.start(time, now=True)
 StartTcpServer(context, identity=identity, address=('0.0.0.0', 502))
