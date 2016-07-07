@@ -7,7 +7,6 @@ from pymodbus.device import ModbusDeviceIdentification
 from pymodbus.datastore import ModbusSequentialDataBlock
 from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
 from pymodbus.transaction import ModbusRtuFramer, ModbusAsciiFramer
-
 from twisted.internet.task import LoopingCall
 
 import logging
@@ -31,21 +30,9 @@ SLAVE_ID = 0x00
 OLD_GPIO = [0] * len(GPIO_TABLE)
 GPO_SHIFT = 3
 
-def set_gpio(context):
-    for i in range(1, len(GPIO_TABLE)):
-        if GPIO_TABLE[i] == 3 or GPIO_TABLE[i] == 4:
-            v = context[SLAVE_ID].getValues(COIL, i, 1)
-            v = v[0]
-            if v != GPIO_TABLE[i] + GPO_SHIFT:
-                log.info('Set GPO %d : %d => %d', i, GPIO_TABLE[i], v)
-                GPIO.output(i, v)
-                GPIO_TABLE[i] = v + GPO_SHIFT
-
-def updating_writer(a):
-    log.debug("updating the context")
+def dump_store(a):
     context  = a[0]
     address  = 0x00
-    set_gpio(context)
     values   = context[SLAVE_ID].getValues(DISCRETE_INPUTS, 0, count=len(GPIO_TABLE))
     log.debug("DI values: " + str(values))
     values   = context[SLAVE_ID].getValues(COIL, 0, count=len(GPIO_TABLE))
@@ -60,6 +47,22 @@ def gpi_edge(i):
         OLD_GPIO[i] = v
     else:
         log.info('Weird edge triggered in GPI %d', i)
+
+
+def set_gpo(pin, v):
+    if GPIO_TABLE[pin] == 3 or GPIO_TABLE[pin] == 4:
+        log.info('Set GPO %d : %d', pin, v)
+        GPIO.output(pin, v)
+        GPIO_TABLE[pin] = v + GPO_SHIFT
+
+
+# Override ModbusSlaveContext to hook our function
+class myModbusSlaveContext(ModbusSlaveContext):
+    def setValues(self, fx, address, values):
+        super(myModbusSlaveContext, self).setValues(fx, address, values)
+        if self.decode(fx) == 'c':
+            for i in range(len(values)):
+                set_gpo(address + i, values[i])
 
 
 # Set GPIO
@@ -87,7 +90,7 @@ for i in range(len(GPIO_TABLE)):
         raise ValueError, "Invalid GPIO setup, pin %d" % i
 
 # Initialize ModBus Context
-store = ModbusSlaveContext(
+store = myModbusSlaveContext(
     di = ModbusSequentialDataBlock(0, [0]*100),
     co = ModbusSequentialDataBlock(0, [0]*100),
     hr = ModbusSequentialDataBlock(0, [0]*100),
@@ -105,7 +108,7 @@ identity.ModelName   = 'PLC'
 identity.MajorMinorRevision = '1.0'
 
 # Start loop
-time = 5
-loop = LoopingCall(f=updating_writer, a=(context,))
+time = 3
+loop = LoopingCall(f=dump_store, a=(context,))
 loop.start(time, now=True)
 StartTcpServer(context, identity=identity, address=('0.0.0.0', 502))
