@@ -8,6 +8,14 @@ This honeypot implementation serves as part of my talk in [BSidesLV 2016] (https
 
 `test-client.py` is an example that sets GPO by ModBus write_coil.
 
+
+Architecture
+============
+* modsrv.py :: Reads GPIO and saves the status to discrete inputs.  Sets GPIO according to coils.  Bind it to 192.168.42.1
+* mitm.py :: Client to 192.168.42.1, this is the man in the middle and a ModBus server.  Bind it to 192.168.42.2.
+* hmi.py :: Reads discrete inputs from ModBus and use web socket to update it on the browser.  It's not coupled with ModBus IP and could display multiple buses.
+
+
 LICENSE
 =======
 GPLv2.

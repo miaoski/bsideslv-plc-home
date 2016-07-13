@@ -83,15 +83,15 @@ window.onload = function() {
 		s.send('hi');
 	};
 	s.onmessage = function(e) {
-		var values = e.data.split(',');
-		for(var i = 1; i < values.length - 2; i++) {	// 0 is filler
+		var v = e.data.split(',');
+		for(var i = 0; i < v.length - 2; i++) {	// v[0] is DI#1
 			var di = ('00' + i).slice(-2);
 			$('#di'+di)
-				.html('&nbsp;' + values[i] + '&nbsp;')
-				.css('background-color', color[values[i]]);
+				.html('&nbsp;' + v[i] + '&nbsp;')
+				.css('background-color', color[v[i]]);
 		}
-		$('#re01').text(values[18]);
-		$('#re02').text(values[19]);
+		$('#re01').text(v[18]);
+		$('#re02').text(v[19]);
 		s.send('');
 	};
 };

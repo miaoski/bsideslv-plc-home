@@ -107,7 +107,7 @@ identity.MajorMinorRevision = '1.0'
 
 # Start loop
 loop = LoopingCall(f=dump_store, a=(context,))
-loop.start(3, now=True)
+loop.start(10, now=True)
 loop_scan_gpi = LoopingCall(f=scan_gpi)
 loop_scan_gpi.start(0.1, now=True)
 StartTcpServer(context, identity=identity, address=('0.0.0.0', 502))

@@ -1,10 +1,19 @@
 # -*- coding: utf8 -*-
+# This trivial HMI is decoupled from ModBus server
+
 import gevent
 import random
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
+from pymodbus.client.sync import ModbusTcpClient
+from time import sleep
+
+client = ModbusTcpClient('127.0.0.1')
 
 def read_di():
-    di = [random.randint(0, 1) for _ in range(18)]
+    num_di = 17
+    rr = client.read_discrete_inputs(1, num_di)
+    rr = rr.bits[:num_di]
+    di = ['0', ] + ['1' if x else '0' for x in rr]    # No GPIO 1 on RPi
     return di
 
 
@@ -16,10 +25,10 @@ def read_re():
 class wsApp(WebSocketApplication):
     def on_open(self):
         while True:
-            di = map(str, read_di())
+            di = read_di()
             re = read_re()
             self.ws.send(','.join(di + re))
-            gevent.sleep(3)
+            gevent.sleep(0.3)
 
     def on_close(self, reason):
         print "Connection Closed!!!", reason
