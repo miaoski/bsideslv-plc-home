@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>A Trivial HMI</title>
+<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+</head>
+<body>
+<h1>A Trivial HMI</h1>
+<p>Sorry, I'm really bad at human interface.</p>
+<h2>Status</h2>
+DI 1: <span id="di01">--</span><br>
+DI 2: <span id="di02">--</span><br>
+DI 3: <span id="di03">--</span><br>
+DI 4: <span id="di04">--</span><br>
+DI 5: <span id="di05">--</span><br>
+DI 6: <span id="di06">--</span><br>
+DI 7: <span id="di07">--</span><br>
+DI 8: <span id="di08">--</span><br>
+DI 9: <span id="di09">--</span><br>
+DI 10: <span id="di10">--</span><br>
+DI 11: <span id="di11">--</span><br>
+DI 12: <span id="di12">--</span><br>
+DI 13: <span id="di13">--</span><br>
+DI 14: <span id="di14">--</span><br>
+DI 15: <span id="di15">--</span><br>
+DI 16: <span id="di16">--</span><br>
+DI 17: <span id="di17">--</span><br>
+Register 1: <span id="re01">--</span><br>
+Register 2: <span id="re02">--</span><br>
+</p>
+
+<script>
+window.onload = function() {
+	var s = new WebSocket("ws://" + window.location.hostname + ":8000/data");
+
+	s.onopen = function() {
+		s.send('hi');
+	};
+	s.onmessage = function(e) {
+		var values = e.data.split(',');
+		for(var i = 1; i < values.length - 2; i++) {	// 0 is filler
+			var di = ('00' + i).slice(-2);
+			$('#di'+di).text(values[i]);
+		}
+		$('#re01').text(values[18]);
+		$('#re02').text(values[19]);
+		s.send('');
+	};
+};
+</script>
+</body>
+</html>
