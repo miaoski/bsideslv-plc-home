@@ -6,8 +6,9 @@ import random
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 from pymodbus.client.sync import ModbusTcpClient
 from time import sleep
+import sys
 
-client = ModbusTcpClient('127.0.0.1')
+client = None   # ModBus client
 
 def read_di():
     num_di = 17
@@ -55,5 +56,11 @@ resource = Resource([
 ])
 
 if __name__ == "__main__":
-    server = WebSocketServer(('', 8000), resource, debug=False)
+    try:
+        myip = sys.argv[1]
+    except IndexError:
+        print 'Usage python hmi.py 192.168.42.1'
+        sys.exit(1)
+    client = ModbusTcpClient(myip)
+    server = WebSocketServer((myip, 8000), resource, debug=False)
     server.serve_forever()
