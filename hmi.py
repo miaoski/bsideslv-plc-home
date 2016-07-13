@@ -55,5 +55,5 @@ resource = Resource([
 ])
 
 if __name__ == "__main__":
-    server = WebSocketServer(('', 8000), resource, debug=True)
+    server = WebSocketServer(('', 8000), resource, debug=False)
     server.serve_forever()
