@@ -9,7 +9,7 @@ def read_di():
 
 
 def read_re():
-    di = [random.random()*100 for _ in range(2)]
+    di = ['%0.2f' % (random.random()*100) for _ in range(2)]
     return di
 
 
@@ -17,7 +17,7 @@ class wsApp(WebSocketApplication):
     def on_open(self):
         while True:
             di = map(str, read_di())
-            re = map(str, read_re())
+            re = read_re()
             self.ws.send(','.join(di + re))
             gevent.sleep(3)
 
@@ -25,14 +25,24 @@ class wsApp(WebSocketApplication):
         print "Connection Closed!!!", reason
 
 
-def static_wsgi_app(environ, start_response):
+def homepage(environ, start_response):
     start_response("200 OK", [("Content-Type", "text/html")])
     return open("hmi.html").readlines()
 
 
+def icons(environ, start_response):
+    if environ['PATH_INFO'] == '/turn-on.png':
+        fn = 'turn-on.png'
+    else:
+        fn = 'turn-off.png'
+    start_response("200 OK", [("Content-Type", "image/png")])
+    return open(fn, 'rb').read()
+
+
 resource = Resource([
-    ('/', static_wsgi_app),
-    ('/data', wsApp)
+    ('/data', wsApp),
+    ('/.+.png$', icons),
+    ('/', homepage),
 ])
 
 if __name__ == "__main__":

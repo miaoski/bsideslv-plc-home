@@ -3,35 +3,81 @@
 <head>
 <title>A Trivial HMI</title>
 <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<style type="text/css">
+table {
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+th {
+	font-weight: normal;
+	border: 1px solid black;
+}
+td {
+	text-align: center;
+	border: 1px solid black;
+}
+.reg { text-align: left; }
+</style>
 </head>
 <body>
 <h1>A Trivial HMI</h1>
 <p>Sorry, I'm really bad at human interface.</p>
 <h2>Status</h2>
-DI 1: <span id="di01">--</span><br>
-DI 2: <span id="di02">--</span><br>
-DI 3: <span id="di03">--</span><br>
-DI 4: <span id="di04">--</span><br>
-DI 5: <span id="di05">--</span><br>
-DI 6: <span id="di06">--</span><br>
-DI 7: <span id="di07">--</span><br>
-DI 8: <span id="di08">--</span><br>
-DI 9: <span id="di09">--</span><br>
-DI 10: <span id="di10">--</span><br>
-DI 11: <span id="di11">--</span><br>
-DI 12: <span id="di12">--</span><br>
-DI 13: <span id="di13">--</span><br>
-DI 14: <span id="di14">--</span><br>
-DI 15: <span id="di15">--</span><br>
-DI 16: <span id="di16">--</span><br>
-DI 17: <span id="di17">--</span><br>
-Register 1: <span id="re01">--</span><br>
-Register 2: <span id="re02">--</span><br>
-</p>
+<table>
+<tr>
+<th>DI 1</th>
+<th>DI 2</th>
+<th>DI 3</th>
+<th>DI 4</th>
+<th>DI 5</th>
+<th>DI 6</th>
+<th>DI 7</th>
+<th>DI 8</th>
+<th>DI 9</th>
+<th>DI 10</th>
+</tr>
+<tr>
+<td><span id="di01">--</span></td>
+<td><span id="di02">--</span></td>
+<td><span id="di03">--</span></td>
+<td><span id="di04">--</span></td>
+<td><span id="di05">--</span></td>
+<td><span id="di06">--</span></td>
+<td><span id="di07">--</span></td>
+<td><span id="di08">--</span></td>
+<td><span id="di09">--</span></td>
+<td><span id="di10">--</span></td>
+</tr>
+<tr>
+<th>DI 11</th>
+<th>DI 12</th>
+<th>DI 13</th>
+<th>DI 14</th>
+<th>DI 15</th>
+<th>DI 16</th>
+<th>DI 17</th>
+<td colspan="3" class="reg">
+Register 1: <span id="re01">--</span>
+</td>
+</tr>
+<tr>
+<td><span id="di11">--</span></td>
+<td><span id="di12">--</span></td>
+<td><span id="di13">--</span></td>
+<td><span id="di14">--</span></td>
+<td><span id="di15">--</span></td>
+<td><span id="di16">--</span></td>
+<td><span id="di17">--</span></td>
+<td colspan="3" class="reg">
+Register 2: <span id="re02">--</span>
+</td>
+</tr>
+</table>
 
 <script>
 window.onload = function() {
 	var s = new WebSocket("ws://" + window.location.hostname + ":8000/data");
+	var color = ['#f88', '#3c3'];
 
 	s.onopen = function() {
 		s.send('hi');
@@ -40,7 +86,9 @@ window.onload = function() {
 		var values = e.data.split(',');
 		for(var i = 1; i < values.length - 2; i++) {	// 0 is filler
 			var di = ('00' + i).slice(-2);
-			$('#di'+di).text(values[i]);
+			$('#di'+di)
+				.html('&nbsp;' + values[i] + '&nbsp;')
+				.css('background-color', color[values[i]]);
 		}
 		$('#re01').text(values[18]);
 		$('#re02').text(values[19]);
