@@ -2,15 +2,23 @@
 # This trivial HMI is decoupled from ModBus server
 
 import gevent
-import random
-from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
+from flask import Flask, render_template
+from flask_sockets import Sockets
 from pymodbus.client.sync import ModbusTcpClient
 from time import sleep
 import sys
 
-client = None   # ModBus client
+app = Flask(__name__)
+sockets = Sockets(app)
 
-def read_di(num = 20):
+try:
+    myip = sys.argv[1]
+except IndexError:
+    print 'Usage python hmi.py 192.168.42.1'
+    sys.exit(1)
+client = ModbusTcpClient(myip)
+
+def read_di(f, num = 20):
     rr = client.read_discrete_inputs(1, num)
     rr = rr.bits[:num]
     di = ['0', ] + ['1' if x else '0' for x in rr]    # No GPIO 1 on RPi
@@ -31,50 +39,30 @@ def read_hr(num = 10):
     return di
 
 
-class wsApp(WebSocketApplication):
-    def on_open(self):
-        while True:
-            try:
-                di = read_di()
-                co = read_co()
-                hr = read_hr()
-            except:
-                print 'Exception.  Wait for next run.'
-                gevent.sleep(1)
-                continue
-            self.ws.send('\n'.join((','.join(di), ','.join(co), ','.join(hr))))
-            gevent.sleep(0.3)
-
-    def on_close(self, reason):
-        print "Connection Closed!!!", reason
+@sockets.route('/data')
+def read_data(ws):
+    while not ws.closed:
+        try:
+            di = read_di()
+            co = read_co()
+            hr = read_hr()
+        except:
+            print 'Exception.  Wait for next run.'
+            gevent.sleep(1)
+            continue
+        ws.send('\n'.join((','.join(di), ','.join(co), ','.join(hr))))
+        gevent.sleep(0.3)
+    print "Connection Closed!!!", reason
 
 
-def homepage(environ, start_response):
-    start_response("200 OK", [("Content-Type", "text/html")])
-    return open("hmi.html").readlines()
+@app.route('/')
+def homepage():
+    return render_template('hmi.html')
 
 
-def icons(environ, start_response):
-    if environ['PATH_INFO'] == '/turn-on.png':
-        fn = 'turn-on.png'
-    else:
-        fn = 'turn-off.png'
-    start_response("200 OK", [("Content-Type", "image/png")])
-    return open(fn, 'rb').read()
-
-
-resource = Resource([
-    ('/data', wsApp),
-    ('/.+.png$', icons),
-    ('/', homepage),
-])
-
+# main
 if __name__ == "__main__":
-    try:
-        myip = sys.argv[1]
-    except IndexError:
-        print 'Usage python hmi.py 192.168.42.1'
-        sys.exit(1)
-    client = ModbusTcpClient(myip)
-    server = WebSocketServer((myip, 8000), resource, debug=False)
+    from gevent import pywsgi
+    from geventwebsocket.handler import WebSocketHandler
+    server = pywsgi.WSGIServer((myip, 8000), app, handler_class=WebSocketHandler)
     server.serve_forever()
