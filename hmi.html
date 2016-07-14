@@ -20,9 +20,10 @@ td {
 </style>
 </head>
 <body>
+
 <h1>A Trivial HMI</h1>
-<p>Sorry, I'm really bad at human interface.</p>
-<h2>Status</h2>
+
+<h2>192.168.42.1</h2>
 <table>
 <tr>
 <th>DI 1</th>
@@ -37,16 +38,16 @@ td {
 <th>DI 10</th>
 </tr>
 <tr>
-<td><span id="di01">--</span></td>
-<td><span id="di02">--</span></td>
-<td><span id="di03">--</span></td>
-<td><span id="di04">--</span></td>
-<td><span id="di05">--</span></td>
-<td><span id="di06">--</span></td>
-<td><span id="di07">--</span></td>
-<td><span id="di08">--</span></td>
-<td><span id="di09">--</span></td>
-<td><span id="di10">--</span></td>
+<td><span id="di101">--</span></td>
+<td><span id="di102">--</span></td>
+<td><span id="di103">--</span></td>
+<td><span id="di104">--</span></td>
+<td><span id="di105">--</span></td>
+<td><span id="di106">--</span></td>
+<td><span id="di107">--</span></td>
+<td><span id="di108">--</span></td>
+<td><span id="di109">--</span></td>
+<td><span id="di110">--</span></td>
 </tr>
 <tr>
 <th>DI 11</th>
@@ -56,44 +57,256 @@ td {
 <th>DI 15</th>
 <th>DI 16</th>
 <th>DI 17</th>
-<td colspan="3" class="reg">
-Register 1: <span id="re01">--</span>
-</td>
+<th>DI 18</th>
+<th>DI 19</th>
+<th>DI 20</th>
 </tr>
 <tr>
-<td><span id="di11">--</span></td>
-<td><span id="di12">--</span></td>
-<td><span id="di13">--</span></td>
-<td><span id="di14">--</span></td>
-<td><span id="di15">--</span></td>
-<td><span id="di16">--</span></td>
-<td><span id="di17">--</span></td>
-<td colspan="3" class="reg">
-Register 2: <span id="re02">--</span>
-</td>
+<td><span id="di111">--</span></td>
+<td><span id="di112">--</span></td>
+<td><span id="di113">--</span></td>
+<td><span id="di114">--</span></td>
+<td><span id="di115">--</span></td>
+<td><span id="di116">--</span></td>
+<td><span id="di117">--</span></td>
+<td><span id="di118">--</span></td>
+<td><span id="di119">--</span></td>
+<td><span id="di120">--</span></td>
+</tr>
+<tr>
+<th>CO 1</th>
+<th>CO 2</th>
+<th>CO 3</th>
+<th>CO 4</th>
+<th>CO 5</th>
+<th>CO 6</th>
+<th>CO 7</th>
+<th>CO 8</th>
+<th>CO 9</th>
+<th>CO 10</th>
+</tr>
+<tr>
+<td><span id="co101">--</span></td>
+<td><span id="co102">--</span></td>
+<td><span id="co103">--</span></td>
+<td><span id="co104">--</span></td>
+<td><span id="co105">--</span></td>
+<td><span id="co106">--</span></td>
+<td><span id="co107">--</span></td>
+<td><span id="co108">--</span></td>
+<td><span id="co109">--</span></td>
+<td><span id="co110">--</span></td>
+</tr>
+<tr>
+<th>CO 11</th>
+<th>CO 12</th>
+<th>CO 13</th>
+<th>CO 14</th>
+<th>CO 15</th>
+<th>CO 16</th>
+<th>CO 17</th>
+<th>CO 18</th>
+<th>CO 19</th>
+<th>CO 20</th>
+</tr>
+<tr>
+<td><span id="co111">--</span></td>
+<td><span id="co112">--</span></td>
+<td><span id="co113">--</span></td>
+<td><span id="co114">--</span></td>
+<td><span id="co115">--</span></td>
+<td><span id="co116">--</span></td>
+<td><span id="co117">--</span></td>
+<td><span id="co118">--</span></td>
+<td><span id="co119">--</span></td>
+<td><span id="co120">--</span></td>
+</tr>
+<tr>
+<th>HR 1</th>
+<th>HR 2</th>
+<th>HR 3</th>
+<th>HR 4</th>
+<th>HR 5</th>
+<th>HR 6</th>
+<th>HR 7</th>
+<th>HR 8</th>
+<th>HR 9</th>
+<th>HR 10</th>
+</tr>
+<tr>
+<td><span id="hr101">--</span></td>
+<td><span id="hr102">--</span></td>
+<td><span id="hr103">--</span></td>
+<td><span id="hr104">--</span></td>
+<td><span id="hr105">--</span></td>
+<td><span id="hr106">--</span></td>
+<td><span id="hr107">--</span></td>
+<td><span id="hr108">--</span></td>
+<td><span id="hr109">--</span></td>
+<td><span id="hr110">--</span></td>
+</tr>
+</table>
+
+<h2>192.168.42.2</h2>
+<table>
+<tr>
+<th>DI 1</th>
+<th>DI 2</th>
+<th>DI 3</th>
+<th>DI 4</th>
+<th>DI 5</th>
+<th>DI 6</th>
+<th>DI 7</th>
+<th>DI 8</th>
+<th>DI 9</th>
+<th>DI 10</th>
+</tr>
+<tr>
+<td><span id="di201">--</span></td>
+<td><span id="di202">--</span></td>
+<td><span id="di203">--</span></td>
+<td><span id="di204">--</span></td>
+<td><span id="di205">--</span></td>
+<td><span id="di206">--</span></td>
+<td><span id="di207">--</span></td>
+<td><span id="di208">--</span></td>
+<td><span id="di209">--</span></td>
+<td><span id="di210">--</span></td>
+</tr>
+<tr>
+<th>DI 11</th>
+<th>DI 12</th>
+<th>DI 13</th>
+<th>DI 14</th>
+<th>DI 15</th>
+<th>DI 16</th>
+<th>DI 17</th>
+<th>DI 18</th>
+<th>DI 19</th>
+<th>DI 20</th>
+</tr>
+<tr>
+<td><span id="di211">--</span></td>
+<td><span id="di212">--</span></td>
+<td><span id="di213">--</span></td>
+<td><span id="di214">--</span></td>
+<td><span id="di215">--</span></td>
+<td><span id="di216">--</span></td>
+<td><span id="di217">--</span></td>
+<td><span id="di218">--</span></td>
+<td><span id="di219">--</span></td>
+<td><span id="di220">--</span></td>
+</tr>
+<tr>
+<th>CO 1</th>
+<th>CO 2</th>
+<th>CO 3</th>
+<th>CO 4</th>
+<th>CO 5</th>
+<th>CO 6</th>
+<th>CO 7</th>
+<th>CO 8</th>
+<th>CO 9</th>
+<th>CO 10</th>
+</tr>
+<tr>
+<td><span id="co201">--</span></td>
+<td><span id="co202">--</span></td>
+<td><span id="co203">--</span></td>
+<td><span id="co204">--</span></td>
+<td><span id="co205">--</span></td>
+<td><span id="co206">--</span></td>
+<td><span id="co207">--</span></td>
+<td><span id="co208">--</span></td>
+<td><span id="co209">--</span></td>
+<td><span id="co210">--</span></td>
+</tr>
+<tr>
+<th>CO 11</th>
+<th>CO 12</th>
+<th>CO 13</th>
+<th>CO 14</th>
+<th>CO 15</th>
+<th>CO 16</th>
+<th>CO 17</th>
+<th>CO 18</th>
+<th>CO 19</th>
+<th>CO 20</th>
+</tr>
+<tr>
+<td><span id="co211">--</span></td>
+<td><span id="co212">--</span></td>
+<td><span id="co213">--</span></td>
+<td><span id="co214">--</span></td>
+<td><span id="co215">--</span></td>
+<td><span id="co216">--</span></td>
+<td><span id="co217">--</span></td>
+<td><span id="co218">--</span></td>
+<td><span id="co219">--</span></td>
+<td><span id="co220">--</span></td>
+</tr>
+<tr>
+<th>HR 1</th>
+<th>HR 2</th>
+<th>HR 3</th>
+<th>HR 4</th>
+<th>HR 5</th>
+<th>HR 6</th>
+<th>HR 7</th>
+<th>HR 8</th>
+<th>HR 9</th>
+<th>HR 10</th>
+</tr>
+<tr>
+<td><span id="hr201">--</span></td>
+<td><span id="hr202">--</span></td>
+<td><span id="hr203">--</span></td>
+<td><span id="hr204">--</span></td>
+<td><span id="hr205">--</span></td>
+<td><span id="hr206">--</span></td>
+<td><span id="hr207">--</span></td>
+<td><span id="hr208">--</span></td>
+<td><span id="hr209">--</span></td>
+<td><span id="hr210">--</span></td>
 </tr>
 </table>
 
 <script>
-window.onload = function() {
-	var s = new WebSocket("ws://" + window.location.hostname + ":8000/data");
+function setup(ip, prefix) {
+	var s = new WebSocket("ws://"+ip+":8000/data");
 	var color = ['#f88', '#3c3'];
 
 	s.onopen = function() {
 		s.send('hi');
 	};
 	s.onmessage = function(e) {
-		var v = e.data.split(',');
-		for(var i = 0; i < v.length - 2; i++) {	// v[0] is DI#1
+		var vx = e.data.split('\n');
+        var v = vx[0].split(',');
+		for(var i = 0; i < v.length; i++) {
 			var di = ('00' + i).slice(-2);
-			$('#di'+di)
+			$('#di'+prefix+di)
 				.html('&nbsp;' + v[i] + '&nbsp;')
 				.css('background-color', color[v[i]]);
 		}
-		$('#re01').text(v[18]);
-		$('#re02').text(v[19]);
+        var v = vx[1].split(',');
+		for(var i = 0; i < v.length; i++) {
+			var di = ('00' + i).slice(-2);
+			$('#co'+prefix+di)
+				.html('&nbsp;' + v[i] + '&nbsp;')
+				.css('background-color', color[v[i]]);
+		}
+        var v = vx[2].split(',');
+		for(var i = 0; i < v.length; i++) {
+			var di = ('00' + i).slice(-2);
+			$('#hr'+prefix+di)
+				.html('&nbsp;' + v[i] + '&nbsp;');
+		}
 		s.send('');
 	};
+}
+window.onload = function() {
+	setup('192.168.42.1', '1');
+	setup('192.168.42.2', '2');
 };
 </script>
 </body>
