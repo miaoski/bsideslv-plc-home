@@ -18,7 +18,7 @@ except IndexError:
     sys.exit(1)
 client = ModbusTcpClient(myip)
 
-def read_di(f, num = 20):
+def read_di(num = 20):
     rr = client.read_discrete_inputs(1, num)
     rr = rr.bits[:num]
     di = ['0', ] + ['1' if x else '0' for x in rr]    # No GPIO 1 on RPi
