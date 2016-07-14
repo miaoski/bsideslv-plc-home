@@ -10,9 +10,8 @@ from pymodbus.transaction import ModbusRtuFramer, ModbusAsciiFramer
 from twisted.internet.task import LoopingCall
 
 import logging
-logging.basicConfig()
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 log = logging.getLogger()
-log.setLevel(logging.INFO)
 
 # For GPIO http://www.raspberrypi-spy.co.uk/wp-content/uploads/2012/06/Raspberry-Pi-GPIO-Layout-Model-B-Plus-rotated-2700x900.png
 # GPI = Discrete input
@@ -95,6 +94,11 @@ store = myModbusSlaveContext(
     ir = ModbusSequentialDataBlock(0, [0]*100))
 context = ModbusServerContext(slaves=store, single=True)
 context[0].setValues(DISCRETE_INPUTS, 0, [(1 if x == 1 else 0) for x in OLD_GPIO])
+for i in range(len(GPIO_TABLE)):
+    if GPIO_TABLE[i] == 3:
+        context[0].setValues(COIL, i, [0,]);
+    elif GPIO_TABLE[i] == 4:
+        context[0].setValues(COIL, i, [1,]);
 
 # Set identification
 identity = ModbusDeviceIdentification()
