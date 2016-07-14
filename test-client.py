@@ -2,7 +2,7 @@
 from pymodbus.client.sync import ModbusTcpClient
 from time import sleep
 
-client = ModbusTcpClient('192.168.42.1')
+client = ModbusTcpClient('192.168.42.2')    # 192.168.42.1 is our ground trush
 v = True
 try:
     while True:
