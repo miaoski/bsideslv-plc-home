@@ -4,11 +4,11 @@
 #   Copies data from ModBus #1 every s seconds
 
 from pymodbus.server.async import StartTcpServer
-from pymodbus.device import ModbusDeviceIdentification
 from pymodbus.datastore import ModbusSequentialDataBlock
 from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
 from twisted.internet.task import LoopingCall
 from pymodbus.client.sync import ModbusTcpClient
+from identity import identity
 
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
@@ -67,16 +67,8 @@ store = myModbusSlaveContext(
     ir = ModbusSequentialDataBlock(0, [0]*IR_NUM))
 context = ModbusServerContext(slaves=store, single=True)
 
-# Set identification
-identity = ModbusDeviceIdentification()
-identity.VendorName  = 'pymodbus'
-identity.VendorUrl   = 'http://github.com/miaoski/bsideslv-plc-home'
-identity.ProductCode = 'HA'
-identity.ProductName = 'Home Automation'
-identity.ModelName   = 'PLC'
-identity.MajorMinorRevision = '1.0'
 
 # Start loop
 loop = LoopingCall(f=copy_modbus_source, a=(context,))
 loop.start(TIME_TO_COPY, now=True)
-StartTcpServer(context, identity=identity, address=('192.168.42.2', 502))
+StartTcpServer(context, identity=identity(), address=('192.168.42.2', 502))
