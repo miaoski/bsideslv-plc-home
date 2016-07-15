@@ -95,7 +95,7 @@ store = myModbusSlaveContext(
     hr = ModbusSequentialDataBlock(0, [0]*100),
     ir = ModbusSequentialDataBlock(0, [0]*100))
 context = ModbusServerContext(slaves=store, single=True)
-context[0].setValues(DISCRETE_INPUTS, 1, [(1 if x == 1 else 0) for x in OLD_GPIO])
+context[0].setValues(DISCRETE_INPUTS, 0, [(1 if x == 1 else 0) for x in OLD_GPIO])
 for i in range(len(GPIO_TABLE)):
     if GPIO_TABLE[i] == 3:
         context[0].setValues(COIL, i, [0,]);

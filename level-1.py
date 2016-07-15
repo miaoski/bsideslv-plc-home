@@ -18,31 +18,35 @@ client = ModbusTcpClient('192.168.42.1')    # 192.168.42.1 is our ground truth
 TIME_TO_COPY = 10               # Copy from truth every 10 seconds
 
 SLAVE_ID = 0x00
-DI_NUM = 20
-CO_NUM = 20
-HR_NUM = 5
-IR_NUM = 5
+DI_NUM = 20+1
+CO_NUM = 20+1
+HR_NUM = 5+1
+IR_NUM = 5+1
 
-def copy_modbus_source(a):
+def copy_modbus_source(a):      # Notice that addr=0 is always skipped
     context = a[0]
     try:
-        rr = client.read_discrete_inputs(1, DI_NUM)
-        context[SLAVE_ID].store['d'] = ModbusSequentialDataBlock(1, rr.bits)
+        rr = client.read_discrete_inputs(0, DI_NUM)
+        context[SLAVE_ID].store['d'] = ModbusSequentialDataBlock(0, [False,] + rr.bits[:DI_NUM])
+        print [1 if x else 0 for x in context[SLAVE_ID].store['d'].values]
     except:
         log.warn('Cannot read DI')
     try:
-        rr = client.read_coils(1, CO_NUM)
-        context[SLAVE_ID].store['c'] = ModbusSequentialDataBlock(1, rr.bits)
+        rr = client.read_coils(0, CO_NUM)
+        context[SLAVE_ID].store['c'] = ModbusSequentialDataBlock(0, [False,] + rr.bits[:CO_NUM])
+        print [1 if x else 0 for x in context[SLAVE_ID].store['c'].values]
     except:
         log.warn('Cannot read CO')
     try:
-        rr = client.read_holding_registers(1, HR_NUM)
-        context[SLAVE_ID].store['h'] = ModbusSequentialDataBlock(1, rr.registers)
+        rr = client.read_holding_registers(0, HR_NUM)
+        context[SLAVE_ID].store['h'] = ModbusSequentialDataBlock(0, [0,] + rr.registers[:HR_NUM])
+        print context[SLAVE_ID].store['h'].values
     except:
         log.warn('Cannot read HR')
     try:
-        rr = client.read_input_registers(1, IR_NUM)
-        context[SLAVE_ID].store['i'] = ModbusSequentialDataBlock(1, rr.registers)
+        rr = client.read_input_registers(0, IR_NUM)
+        context[SLAVE_ID].store['i'] = ModbusSequentialDataBlock(0, [0,] + rr.registers[:IR_NUM])
+        print context[SLAVE_ID].store['i'].values
     except:
         log.warn('Cannot read IR')
     log.info('Copied from modbus server #1')
