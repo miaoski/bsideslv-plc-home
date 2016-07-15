@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Not an HMI</title>
+<script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+<style type="text/css">
+table {
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+th {
+	font-weight: normal;
+	border: 1px solid black;
+}
+td {
+	text-align: center;
+	border: 1px solid black;
+}
+.reg { text-align: left; }
+</style>
+</head>
+<body>
+
+<h1>Not an HMI</h1>
+
+<h2>192.168.42.1</h2>
+<table>
+<tr>{% for i in range( 1, 11) %}<th>DI {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range( 1, 11) %}<td><span id="di1{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<th>DI {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<td><span id="di1{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>{% for i in range( 1, 11) %}<th>CO {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range( 1, 11) %}<td><span id="co1{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<th>CO {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<td><span id="co1{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>
+{% for i in range(1, 6) %}<th>IR {{ i }}</th>{% endfor %}
+{% for i in range(1, 6) %}<th>HR {{ i }}</th>{% endfor %}
+</tr>
+<tr>
+{% for i in range(1, 6) %}<td><span id="ir1{{ "%02d"|format(i) }}">--</span></td>{% endfor %}
+{% for i in range(1, 6) %}<td><span id="hr1{{ "%02d"|format(i) }}">--</span></td>{% endfor %}
+</tr>
+</table>
+
+<h2>192.168.42.2</h2>
+<table>
+<tr>{% for i in range( 1, 11) %}<th>DI {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range( 1, 11) %}<td><span id="di2{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<th>DI {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<td><span id="di2{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>{% for i in range( 1, 11) %}<th>CO {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range( 1, 11) %}<td><span id="co2{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<th>CO {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<td><span id="co2{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>
+{% for i in range(1, 6) %}<th>IR {{ i }}</th>{% endfor %}
+{% for i in range(1, 6) %}<th>HR {{ i }}</th>{% endfor %}
+</tr>
+<tr>
+{% for i in range(1, 6) %}<td><span id="ir1{{ "%02d"|format(i) }}">--</span></td>{% endfor %}
+{% for i in range(1, 6) %}<td><span id="hr1{{ "%02d"|format(i) }}">--</span></td>{% endfor %}
+</tr>
+</table>
+
+<script>
+var color = ['#f88', '#3c3'];
+
+function update(xs, tag) {
+    var v = xs.split(',');
+    for(var i = 0; i < v.length; i++) {
+        var di = ('00' + i).slice(-2);
+        var x = $('#'+tag+di);
+        x.html('&nbsp;' + v[i] + '&nbsp;');
+        if(tag.startsWith('di') || tag.startsWith('co')) {
+            x.css('background-color', color[v[i]]);
+        }
+    }
+}
+function setup(ip, prefix) {
+	var s = new WebSocket("ws://"+ip+":8000/data");
+	s.onopen = function() {
+		s.send('hi');
+	};
+	s.onmessage = function(e) {
+		var vx = e.data.split('\n');
+        update(vx[0], 'di' + prefix);
+        update(vx[1], 'co' + prefix);
+        update(vx[2], 'ir' + prefix);
+        update(vx[3], 'hr' + prefix);
+		s.send('');
+	};
+}
+window.onload = function() {
+	setup('192.168.42.1', '1');
+	setup('192.168.42.2', '2');
+};
+</script>
+</body>
+</html>

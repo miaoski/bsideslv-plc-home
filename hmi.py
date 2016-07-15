@@ -19,22 +19,22 @@ except IndexError:
 client = ModbusTcpClient(myip)
 
 def read_di(num = 20):
-    rr = client.read_discrete_inputs(1, num)
-    rr = rr.bits[:num]
+    rr = client.read_discrete_inputs(1, num).bits[:num]
     di = ['0', ] + ['1' if x else '0' for x in rr]    # No GPIO 1 on RPi
     return di
 
-
 def read_co(num = 20):
-    rr = client.read_coils(1, num)
-    rr = rr.bits[:num]
+    rr = client.read_coils(1, num).bits[:num]
     di = ['0', ] + ['1' if x else '0' for x in rr]
     return di
 
+def read_ir(num = 5):
+    rr = client.read_input_registers(1, num).registers[:num]
+    di = map(str, rr)
+    return di
 
-def read_hr(num = 10):
-    rr = client.read_holding_registers(1, num)
-    rr = rr.registers[:num]
+def read_hr(num = 5):
+    rr = client.read_holding_registers(1, num).registers[:num]
     di = map(str, rr)
     return di
 
@@ -45,12 +45,13 @@ def read_data(ws):
         try:
             di = read_di()
             co = read_co()
+            ir = read_ir()
             hr = read_hr()
         except:
             print 'Exception.  Wait for next run.'
             gevent.sleep(1)
             continue
-        ws.send('\n'.join((','.join(di), ','.join(co), ','.join(hr))))
+        ws.send('\n'.join((','.join(di), ','.join(co), ','.join(ir), ','.join(hr))))
         gevent.sleep(0.3)
     print "Connection Closed!!!", reason
 
