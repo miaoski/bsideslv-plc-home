@@ -20,12 +20,12 @@ client = ModbusTcpClient(myip)
 
 def read_di(num = 20):
     rr = client.read_discrete_inputs(1, num).bits[:num]
-    di = ['0', ] + ['1' if x else '0' for x in rr]    # No GPIO 1 on RPi
+    di = ['1' if x else '0' for x in rr]
     return di
 
 def read_co(num = 20):
     rr = client.read_coils(1, num).bits[:num]
-    di = ['0', ] + ['1' if x else '0' for x in rr]
+    di = ['1' if x else '0' for x in rr]
     return di
 
 def read_ir(num = 5):
