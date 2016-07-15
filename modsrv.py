@@ -32,10 +32,10 @@ GPO_SHIFT = 3
 def dump_store(a):
     context  = a[0]
     address  = 0x00
-    values   = context[SLAVE_ID].getValues(DISCRETE_INPUTS, 0, count=len(GPIO_TABLE))
-    log.debug("DI values: " + str(values))
-    values   = context[SLAVE_ID].getValues(COIL, 0, count=len(GPIO_TABLE))
-    log.debug("Coil values: " + str(values))
+    print "DI values:", context[SLAVE_ID].store['d'].values[:20]
+    print "CO values:", context[SLAVE_ID].store['c'].values[:20]
+    print "HR values:", context[SLAVE_ID].store['h'].values[:5]
+    print "IR values:", context[SLAVE_ID].store['i'].values[:5]
 
 
 def scan_gpi():
