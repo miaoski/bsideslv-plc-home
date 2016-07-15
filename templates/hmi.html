@@ -4,6 +4,10 @@
 <title>Not an HMI</title>
 <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
 <style type="text/css">
+.float {
+	float: left;
+	margin-left: 3em;
+}
 table {
 	border: 1px solid black;
 	border-collapse: collapse;
@@ -23,6 +27,7 @@ td {
 
 <h1>Not an HMI</h1>
 
+<div class="float">
 <h2>192.168.42.1</h2>
 <table>
 <tr>{% for i in range( 1, 11) %}<th>DI {{ i }}</th>{% endfor %}</tr>
@@ -42,7 +47,9 @@ td {
 {% for i in range(1, 6) %}<td><span id="hr1{{ "%02d"|format(i) }}">--</span></td>{% endfor %}
 </tr>
 </table>
+</div>
 
+<div class="float">
 <h2>192.168.42.2</h2>
 <table>
 <tr>{% for i in range( 1, 11) %}<th>DI {{ i }}</th>{% endfor %}</tr>
@@ -62,6 +69,7 @@ td {
 {% for i in range(1, 6) %}<td><span id="hr1{{ "%02d"|format(i) }}">--</span></td>{% endfor %}
 </tr>
 </table>
+</div>
 
 <script>
 var color = ['#f88', '#3c3'];
