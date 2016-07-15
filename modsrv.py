@@ -34,8 +34,8 @@ def dump_store(a):
     address  = 0x00
     print "DI values:", context[SLAVE_ID].store['d'].values[:20]
     print "CO values:", context[SLAVE_ID].store['c'].values[:20]
-    print "HR values:", context[SLAVE_ID].store['h'].values[:5]
-    print "IR values:", context[SLAVE_ID].store['i'].values[:5]
+    print "HR values:", context[SLAVE_ID].store['h'].values[:10]
+    print "IR values:", context[SLAVE_ID].store['i'].values[:10]
 
 
 def scan_gpi():
