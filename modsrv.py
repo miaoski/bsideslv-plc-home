@@ -6,8 +6,8 @@ from pymodbus.server.async import StartTcpServer
 from pymodbus.device import ModbusDeviceIdentification
 from pymodbus.datastore import ModbusSequentialDataBlock
 from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
-from pymodbus.transaction import ModbusRtuFramer, ModbusAsciiFramer
 from twisted.internet.task import LoopingCall
+from identity import identity
 
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
@@ -102,18 +102,10 @@ for i in range(len(GPIO_TABLE)):
     elif GPIO_TABLE[i] == 4:
         context[0].setValues(COIL, i, [1,]);
 
-# Set identification
-identity = ModbusDeviceIdentification()
-identity.VendorName  = 'pymodbus'
-identity.VendorUrl   = 'http://github.com/miaoski/bsideslv-plc-home'
-identity.ProductCode = 'HA'
-identity.ProductName = 'Home Automation'
-identity.ModelName   = 'PLC'
-identity.MajorMinorRevision = '1.0'
 
 # Start loop
 loop = LoopingCall(f=dump_store, a=(context,))
 loop.start(10, now=True)
 loop_scan_gpi = LoopingCall(f=scan_gpi)
 loop_scan_gpi.start(0.1, now=True)
-StartTcpServer(context, identity=identity, address=('192.168.42.1', 502))
+StartTcpServer(context, identity=identity(), address=('192.168.42.1', 502))
