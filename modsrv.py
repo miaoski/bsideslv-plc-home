@@ -62,6 +62,8 @@ class myModbusSlaveContext(ModbusSlaveContext):
         if self.decode(fx) == 'c':
             for i in range(len(values)):
                 set_gpo(address + i, values[i])
+        if self.decode(fx) == 'h':
+            log.warn('HR %s => %s', str(address), str(values))
 
 
 # Set GPIO
