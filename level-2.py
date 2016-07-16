@@ -19,51 +19,104 @@ client = ModbusTcpClient('192.168.42.1')    # 192.168.42.1 is our ground truth
 TICK_TIMER = 1      # 1 tick = 1 second
 COMPARE_TIMER = 3   # Compare with ground truth every 3 seconds
 COPY_TIMER = 0.1    # Copy DI and IR every 0.1s
+GMTICK = 0          # Greenwich mean tick :-)
 DI_NUM = 20+1       # Number of DI.  Read only and copied 
 CO_NUM = 20+1       # Number of CO
 IR_NUM = 5+1        # Number of IR, which is read only.
 HR_NUM = 5+1        # Number of HR
 SLAVE_ID = 0x00
 
-ACTIONS = []        # pile of actions to execute per tick
+ACTIONS = {}        # pile of actions to execute per tick
 s_co = d_co = []    # For debugging
 s_hr = d_hr = []    # For debugging
 context = None      # global
 
-class Delayed:
+def setvalue(fx, addr, value):
+    global context
+    fx_table = {1: 'c', 3: 'h'}
+    if fx in fx_table:
+        context[SLAVE_ID].store[fx_table[fx]].values[addr] = value
+    else:
+        logging.error('Unknown fx: %d', fx)
+
+
+class Delayed(object):
     def __init__(self, fx, addr, sv, dv, ticks):
         self.addr = addr
         self.fx = fx
-        self.sv = sv
-        self.dv = dv
+        self.sv = sv                    # surface or source, which you want :-)
+        self.dv = dv                    # deep or destination, which you want :-)
         self.ticks = ticks
+        if fx == 1:
+            self.func = 'CO'
+        elif fx == 3:
+            self.func = 'HR'
+        else:
+            raise ValueError, 'Invalid function code'
     def __call__(self):
-        global context
         if self.ticks == 0:
-            if self.fx == 1:
-                logging.info('CO# %d : %d => %d', self.addr, self.sv, self.dv)
-                context[SLAVE_ID].store['c'].values[self.addr+1] = self.dv
-            elif self.fx == 3:
-                logging.info('HR# %d : %d => %d', self.addr, self.sv, self.dv)
-                context[SLAVE_ID].store['h'].values[self.addr+1] = self.dv
+            logging.info('%s# %d : %d => %d', self.func, self.addr, self.sv, self.dv)
+            setvalue(self.fx, self.addr+1, self.dv)
             return None
-        self.ticks -= 1
+        else:
+            self.ticks -= 1
         return self
     def __repr__(self):
-        return 'Delayed(%s# %d: %d=>%d in %d ticks)' % (self.fx, self.addr, self.sv, self.dv, self.ticks)
+        return 'Delayed(%s# %d: %d=>%d in %d ticks)' % (self.func, self.addr, self.sv, self.dv, self.ticks)
+
+
+class Incremental(object):              # Limitation: integer only
+    def __init__(self, inc, addr, sv, dv):
+        self.addr = addr
+        self.sv = sv
+        self.dv = dv
+        if sv >= dv and inc > 0:
+            self.inc = int(-inc)
+        else:
+            self.inc = int(inc)
+    def __call__(self):
+        logging.info('HR# %d : %d => %d', self.addr, self.sv, self.sv + self.inc)
+        self.sv += self.inc
+        if self.inc >= 0 and self.sv >= self.dv:
+            self.sv = self.dv
+            setvalue(3, self.addr+1, self.sv)
+            return None
+        if self.inc < 0 and self.sv <= self.dv:
+            self.sv = self.dv
+            setvalue(3, self.addr+1, self.sv)
+            return None
+        setvalue(3, self.addr+1, self.sv)
+        return self
+    def __repr__(self):
+        return 'Incremental(HR# %d: %d=>%d, %d per tick)' % (self.addr, self.sv, self.dv, self.inc)
+
+
+class Scaled(Incremental):              # Limitation: integer only
+    def __init__(self, pct, addr, sv, dv):
+        print 'Scaled called: %f, %d, %d, %d' % (pct, addr, sv, dv)
+        self.pct = pct
+        inc = round((dv - sv) * pct)    # round to integer
+        super(Scaled, self).__init__(inc, addr, sv, dv)
+    def __repr__(self):
+        return 'Scaled(HR# %d: %d=>%d, %d%% per tick)' % (self.addr, self.sv, self.dv, int(self.pct*100))
 
 
 # function pointers to call when a pin changes value
 from random import randint
-co_dft = lambda p, s, d: Delayed(1, p, s, d, 1)
-co_slw = lambda p, s, d: Delayed(1, p, s, d, 3)
-co_rnd = lambda p, s, d: Delayed(1, p, s, d, randint(1, 5))  # Random delay, 1 - 5 ticks
-hr_dft = lambda p, s, d: Delayed(3, p, s, d, 1)
-co_change = [co_slw, co_dft, co_slw, co_rnd, co_dft, co_dft, co_dft, co_dft, co_dft, co_dft, co_dft]
-hr_change = [hr_dft, hr_dft, hr_dft, hr_dft, hr_dft, hr_dft]
+co_dft = lambda a,s,d: Delayed(1, a, s, d, 1)
+co_slw = lambda a,s,d: Delayed(1, a, s, d, 3)
+co_rnd = lambda a,s,d: Delayed(1, a, s, d, randint(1, 5))  # Random delay, 1 - 5 ticks
+hr_dft = lambda a,s,d: Delayed(3, a, s, d, 1)
+hr_slw = lambda a,s,d: Delayed(3, a, s, d, 3)
+hr_rnd = lambda a,s,d: Delayed(3, a, s, d, randint(1, 5))  # Random delay, 1 - 5 ticks
+hr_pct = lambda x: lambda a,s,d: Scaled(x, a, s, d)
+hr_inc = lambda x: lambda a,s,d: Incremental(x, a, s, d)
+co_change = [co_slw, co_dft, co_slw, co_rnd, co_dft, co_dft, co_dft, co_dft, co_rnd, co_dft, co_slw]
+hr_change = [hr_dft, hr_dft, hr_slw, hr_rnd, hr_pct(0.2), hr_inc(3)]
 
 
 def dump_memory():
+    print 'Tick   :', GMTICK
     print 'S_CO   :', [1 if x else 0 for x in s_co]
     print 'D_CO   :', [1 if x else 0 for x in d_co]
     print 'S_HR   :', s_hr
@@ -102,17 +155,20 @@ def compare_source(a):
     log.info('Comparing CO and HR to modbus server #1')
     s_co = context[SLAVE_ID].store['c'].values
     s_hr = context[SLAVE_ID].store['h'].values
-    for i in range(1, CO_NUM):
-        if s_co[i] != d_co[i]:
-            ACTIONS.append(co_change[i-1](i-1, s_co[i], d_co[i]))
-    for i in range(1, HR_NUM):
-        if s_hr[i] != d_hr[i]:
-            ACTIONS.append(hr_change[i-1](i-1, s_hr[i], d_hr[i]))
+    for i in range(1, CO_NUM + 1):
+        act = 'c%d' % i
+        if s_co[i] != d_co[i] and act not in ACTIONS:
+            ACTIONS[act] = co_change[i-1](i-1, s_co[i], d_co[i])
+    for i in range(1, HR_NUM + 1):
+        act = 'i%d' % i
+        if s_hr[i] != d_hr[i] and act not in ACTIONS:
+            ACTIONS[act] = hr_change[i-1](i-1, s_hr[i], d_hr[i])
 
 
 def tick():
-    global ACTIONS
-    ACTIONS = filter(lambda x: x(), ACTIONS)
+    global ACTIONS, GMTICK
+    ACTIONS = {k:v() for k,v in ACTIONS.iteritems() if v}
+    GMTICK += 1
     dump_memory()
 
 
