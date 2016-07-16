@@ -17,6 +17,18 @@ Architecture
 * level-2.py :: Level-2 proxy.  It's like level-1 proxy, but applies fuzzy functions and delays to changed values.
 
 
+Level-2 Proxy
+=============
+The following simulations are provided:
+* Procrastinated and immediate copy from ground truth. (CO, HR)
+* Scaled change from modified value towards ground truth.  (HR)
+* Fixed incremental change from modified value towards ground truth.  (HR)
+
+
+TODO:
+* Incremental change with preset momentum towards ground truth.  (HR)
+* Simulation of a pump hooked to a given CO and HR with fixed flow rate.
+
 
 LICENSE
 =======
