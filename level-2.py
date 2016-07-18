@@ -113,6 +113,7 @@ class Scaled(Incremental):              # Limitation: integer only
 
 # function pointers to call when a pin changes value
 from random import randint
+co_imm = lambda a,s,d: Delayed(1, a, s, d, 0)
 co_dft = lambda a,s,d: Delayed(1, a, s, d, 1)
 co_slw = lambda a,s,d: Delayed(1, a, s, d, 3)
 co_rnd = lambda a,s,d: Delayed(1, a, s, d, randint(1, 5))  # Random delay, 1 - 5 ticks
@@ -124,7 +125,8 @@ hr_pct = lambda x: lambda a,s,d: Scaled(x, a, s, d)
 hr_inc = lambda x: lambda a,s,d: Incremental(x, a, s, d)
 
 # 1-based
-co_change = [None, co_slw, co_dft, co_slw, co_rnd, co_dft, co_ign, co_dft, co_dft, co_rnd, co_dft, co_slw]
+#               0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11
+co_change = [None, co_slw, co_dft, co_slw, co_rnd, co_dft, co_ign, co_dft, co_dft, co_ign, co_dft, co_slw]
 hr_change = [None, hr_dft, hr_dft, hr_slw, co_ign, hr_pct(0.2), hr_inc(3)]
 
 

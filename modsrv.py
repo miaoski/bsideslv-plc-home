@@ -18,7 +18,7 @@ log = logging.getLogger()
 # GPO = Coil
 #   1  2  3  4  5  6  7  8  9 10    0 = Don't set, 1 = GPI (low), 2 = GPI (high), 3 = GPO (low), 4 = GPO (high)
 GPIO_TABLE = [ 0,
-    0, 1, 2, 2, 2, 2, 2, 3, 2, 4,   # +  0
+    0, 1, 2, 2, 2, 2, 2, 3, 3, 4,   # +  0
     2, 2, 2, 0, 0, 2, 2, 2, 2, 2,   # + 10, 14 = TX, 15 = RX
     2, 2, 2, 2, 2, 2, ]             # + 20
 COIL = 1
@@ -28,6 +28,7 @@ INPUT_REGISTERS = 4
 SLAVE_ID = 0x00
 OLD_GPIO = [0] * len(GPIO_TABLE)
 GPO_SHIFT = 3
+HEART_BEAT = 1
 
 def dump_store(a):
     context  = a[0]
@@ -53,6 +54,14 @@ def set_gpo(pin, v):
         log.info('Set GPO %d : %d', pin, v)
         GPIO.output(pin, v)
         GPIO_TABLE[pin] = v + GPO_SHIFT
+
+
+def heart_beat(a):
+    "Send heart beat via CO#9"
+    global HEART_BEAT
+    context = a[0]
+    HEART_BEAT = abs(HEART_BEAT - 1)
+    context[SLAVE_ID].setValues(COIL, 9, [HEART_BEAT, ])
 
 
 # Override ModbusSlaveContext to hook our function
@@ -108,4 +117,6 @@ loop = LoopingCall(f=dump_store, a=(context,))
 loop.start(10, now=True)
 loop_scan_gpi = LoopingCall(f=scan_gpi)
 loop_scan_gpi.start(0.1, now=True)
+loop_heart_beat = LoopingCall(f=heart_beat, a=(context,))
+loop_heart_beat.start(1, now=True)
 StartTcpServer(context, identity=identity(), address=('192.168.42.1', 502))
