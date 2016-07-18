@@ -116,12 +116,12 @@ hr_change = [hr_dft, hr_dft, hr_slw, hr_rnd, hr_pct(0.2), hr_inc(3)]
 
 
 def dump_memory():
-    print 'Tick   :', GMTICK
-    print 'S_CO   :', [1 if x else 0 for x in s_co]
-    print 'D_CO   :', [1 if x else 0 for x in d_co]
-    print 'S_HR   :', s_hr
-    print 'D_HR   :', d_hr
-    print 'Actions:', ACTIONS
+    print 'Tick   :', GMTICK, ACTIONS
+    # print 'S_CO   :', [1 if x else 0 for x in s_co]
+    # print 'D_CO   :', [1 if x else 0 for x in d_co]
+    # # print 'S_HR   :', s_hr
+    # print 'D_HR   :', d_hr
+    # print 'Actions:', ACTIONS
 
 
 def copy_source(a):
