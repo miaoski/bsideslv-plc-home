@@ -71,6 +71,28 @@ td {
 </table>
 </div>
 
+<div class="float">
+<h2>192.168.42.3</h2>
+<table>
+<tr>{% for i in range( 1, 11) %}<th>DI {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range( 1, 11) %}<td><span id="di3{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<th>DI {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<td><span id="di3{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>{% for i in range( 1, 11) %}<th>CO {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range( 1, 11) %}<td><span id="co3{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<th>CO {{ i }}</th>{% endfor %}</tr>
+<tr>{% for i in range(11, 21) %}<td><span id="co3{{ "%02d"|format(i) }}">--</span></td>{% endfor %}</tr>
+<tr>
+{% for i in range(1, 6) %}<th>IR {{ i }}</th>{% endfor %}
+{% for i in range(1, 6) %}<th>HR {{ i }}</th>{% endfor %}
+</tr>
+<tr>
+{% for i in range(1, 6) %}<td><span id="ir3{{ "%02d"|format(i) }}">--</span></td>{% endfor %}
+{% for i in range(1, 6) %}<td><span id="hr3{{ "%02d"|format(i) }}">--</span></td>{% endfor %}
+</tr>
+</table>
+</div>
+
 <script>
 var color = ['#f88', '#3c3'];
 
@@ -102,6 +124,7 @@ function setup(ip, prefix) {
 window.onload = function() {
 	setup('192.168.42.1', '1');
 	setup('192.168.42.2', '2');
+	setup('192.168.42.3', '3');
 };
 </script>
 </body>
