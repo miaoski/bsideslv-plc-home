@@ -36,6 +36,11 @@ It is easy to attach a simulated pump to the 2-level honeypot.  For example,
 * What if someone changes the values of HR#4 ?
 
 
+Heart Beat and Watchdog
+=======================
+`modsrv.py` uses GPO#9 (CO#9) as a heart beat.  The Arduino project in lvdog/ is a simple program that triggers alarm when ModBus server stops beating for 5 or more times.
+
+
 LICENSE
 =======
 GPLv2.
