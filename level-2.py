@@ -35,9 +35,19 @@ def setvalue(fx, addr, value):
     global context
     fx_table = {1: 'c', 3: 'h'}
     if fx in fx_table:
-        context[SLAVE_ID].store[fx_table[fx]].values[addr] = value
+        context[SLAVE_ID].store[fx_table[fx]].values[addr+1] = value
     else:
         logging.error('Unknown fx: %d', fx)
+
+
+def getdi(addr):
+    return 1 if context[SLAVE_ID].store['d'].values[addr+1] else 0
+def getco(addr):
+    return 1 if context[SLAVE_ID].store['c'].values[addr+1] else 0
+def getir(addr):
+    return context[SLAVE_ID].store['i'].values[addr+1]
+def gethr(addr):
+    return context[SLAVE_ID].store['h'].values[addr+1]
 
 
 class Delayed(object):
@@ -56,7 +66,7 @@ class Delayed(object):
     def __call__(self):
         if self.ticks == 0:
             logging.info('%s# %d : %d => %d', self.func, self.addr, self.sv, self.dv)
-            setvalue(self.fx, self.addr+1, self.dv)
+            setvalue(self.fx, self.addr, self.dv)
             return None
         else:
             self.ticks -= 1
@@ -79,13 +89,13 @@ class Incremental(object):              # Limitation: integer only
         self.sv += self.inc
         if self.inc >= 0 and self.sv >= self.dv:
             self.sv = self.dv
-            setvalue(3, self.addr+1, self.sv)
+            setvalue(3, self.addr, self.sv)
             return None
         if self.inc < 0 and self.sv <= self.dv:
             self.sv = self.dv
-            setvalue(3, self.addr+1, self.sv)
+            setvalue(3, self.addr, self.sv)
             return None
-        setvalue(3, self.addr+1, self.sv)
+        setvalue(3, self.addr, self.sv)
         return self
     def __repr__(self):
         return 'Incremental(HR# %d: %d=>%d, %d per tick)' % (self.addr, self.sv, self.dv, self.inc)
@@ -106,21 +116,25 @@ from random import randint
 co_dft = lambda a,s,d: Delayed(1, a, s, d, 1)
 co_slw = lambda a,s,d: Delayed(1, a, s, d, 3)
 co_rnd = lambda a,s,d: Delayed(1, a, s, d, randint(1, 5))  # Random delay, 1 - 5 ticks
+co_ign = lambda a,s,d: None
 hr_dft = lambda a,s,d: Delayed(3, a, s, d, 1)
 hr_slw = lambda a,s,d: Delayed(3, a, s, d, 3)
 hr_rnd = lambda a,s,d: Delayed(3, a, s, d, randint(1, 5))  # Random delay, 1 - 5 ticks
 hr_pct = lambda x: lambda a,s,d: Scaled(x, a, s, d)
 hr_inc = lambda x: lambda a,s,d: Incremental(x, a, s, d)
-co_change = [co_slw, co_dft, co_slw, co_rnd, co_dft, co_dft, co_dft, co_dft, co_rnd, co_dft, co_slw]
-hr_change = [hr_dft, hr_dft, hr_slw, hr_rnd, hr_pct(0.2), hr_inc(3)]
+
+# 1-based
+co_change = [None, co_slw, co_dft, co_slw, co_rnd, co_dft, co_ign, co_dft, co_dft, co_rnd, co_dft, co_slw]
+hr_change = [None, hr_dft, hr_dft, hr_slw, co_ign, hr_pct(0.2), hr_inc(3)]
 
 
 def dump_memory():
     print 'Tick   :', GMTICK, ACTIONS
     # print 'S_CO   :', [1 if x else 0 for x in s_co]
     # print 'D_CO   :', [1 if x else 0 for x in d_co]
-    # # print 'S_HR   :', s_hr
+    # print 'S_HR   :', s_hr
     # print 'D_HR   :', d_hr
+    # print 'IR:', context[SLAVE_ID].store['i'].values
     # print 'Actions:', ACTIONS
 
 
@@ -155,20 +169,55 @@ def compare_source(a):
     log.info('Comparing CO and HR to modbus server #1')
     s_co = context[SLAVE_ID].store['c'].values
     s_hr = context[SLAVE_ID].store['h'].values
-    for i in range(1, CO_NUM + 1):
+    for i in range(1, CO_NUM):
         act = 'c%d' % i
-        if s_co[i] != d_co[i] and act not in ACTIONS:
-            ACTIONS[act] = co_change[i-1](i-1, s_co[i], d_co[i])
-    for i in range(1, HR_NUM + 1):
+        if s_co[i+1] != d_co[i+1] and act not in ACTIONS:
+            ACTIONS[act] = co_change[i](i, s_co[i+1], d_co[i+1])
+    for i in range(1, HR_NUM):
         act = 'i%d' % i
-        if s_hr[i] != d_hr[i] and act not in ACTIONS:
-            ACTIONS[act] = hr_change[i-1](i-1, s_hr[i], d_hr[i])
+        if s_hr[i+1] != d_hr[i+1] and act not in ACTIONS:
+            ACTIONS[act] = hr_change[i](i, s_hr[i+1], d_hr[i+1])
+
+
+# Simulation: Low water on DI#6, high water on DI#7, pump switch on CO#6
+
+class SimulatedPump(object):
+    def __init__(self, reg=4, rate=3):
+        self.reg = reg
+        self.rate = rate
+    def __call__(self):
+        ov = gethr(self.reg)
+        nv = ov + self.rate
+        log.debug('Pump [HR#%d] : %d -> %d', self.reg, ov, nv)
+        if nv > 100:
+            log.error('Water tower overflow!')
+        setvalue(3, self.reg, nv)
+        return self
+    def __repr__(self):
+        return 'Pump(HR#%d, %d per tick)' % (self.reg, self.rate)
+
+
+def simulated_float_switches():
+    global ACTIONS
+    if getdi(6) == 1 and getdi(7) == 1 and getco(6) == 0:
+        log.info('Pull CO#6 high to start the pump')
+        setvalue(1, 6, 1)
+    if getdi(7) == 0 and getco(6) == 1:
+        log.info('Pull CO#6 low to stop the pump')
+        setvalue(1, 6, 0)
+    if getco(6) == 1 and 'h4' not in ACTIONS:
+        ACTIONS['h4'] = SimulatedPump(reg=4, rate=3)
+        log.info('Pump started')
+    if getco(6) == 0 and 'h4' in ACTIONS:
+        del(ACTIONS['h4'])
+        log.info('Pump stopped')
 
 
 def tick():
     global ACTIONS, GMTICK
     ACTIONS = {k:v() for k,v in ACTIONS.iteritems() if v}
     GMTICK += 1
+    simulated_float_switches()
     dump_memory()
 
 
@@ -198,7 +247,7 @@ if __name__ == '__main__':
 
     # Start loop
     loop = LoopingCall(f=copy_source, a=(context,))
-    loop.start(COMPARE_TIMER, now=True)
+    loop.start(COPY_TIMER, now=True)
     loop = LoopingCall(f=compare_source, a=(context,))
     loop.start(COMPARE_TIMER, now=True)
     loop = LoopingCall(f=tick)

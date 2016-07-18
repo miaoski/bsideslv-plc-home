@@ -17,17 +17,23 @@ Architecture
 * level-2.py :: Level-2 proxy.  It's like level-1 proxy, but applies fuzzy functions and delays to changed values.
 
 
-Level-2 Proxy
-=============
+2-Level Honeypot
+================
 The following simulations are provided:
 * Procrastinated and immediate copy from ground truth. (CO, HR)
 * Scaled change from modified value towards ground truth.  (HR)
 * Fixed incremental change from modified value towards ground truth.  (HR)
 
 
-TODO:
-* Incremental change with preset momentum towards ground truth.  (HR)
-* Simulation of a pump hooked to a given CO and HR with fixed flow rate.
+Simulated Pump
+==============
+It is easy to attach a simulated pump to the 2-level honeypot.  For example,
+* Water level reading in IR#4
+* When IR#4 < 5, pull DI#6 (float switch #1) high, thus pulling CO#6 (pump switch) high
+* Pump moves water into some container, thus increasing the reading of HR#4 (should be IR#4, but I want to make it easier.)
+* When IR#4 > 80, pull DI#7 (float switch #2) high, thus pulling CO#6 (pump switch) low
+* What if someone changes the values of CO#6 ?
+* What if someone changes the values of HR#4 ?
 
 
 LICENSE
