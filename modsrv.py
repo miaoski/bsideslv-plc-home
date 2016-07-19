@@ -16,9 +16,9 @@ log = logging.getLogger()
 # For GPIO http://www.raspberrypi-spy.co.uk/wp-content/uploads/2012/06/Raspberry-Pi-GPIO-Layout-Model-B-Plus-rotated-2700x900.png
 # GPI = Discrete input
 # GPO = Coil
-#   1  2  3  4  5  6  7  8  9 10    0 = Don't set, 1 = GPI (low), 2 = GPI (high), 3 = GPO (low), 4 = GPO (high)
+#   1  2  3  4  5  6  7  8  9 10    0 = Don't set, 1 = GPI (low), 2 = GPI (high), 3 = GPO (low), 4 = GPO (high), 5 = Heart Beat
 GPIO_TABLE = [ 0,
-    0, 1, 2, 2, 2, 2, 2, 3, 3, 4,   # +  0
+    0, 1, 2, 2, 2, 2, 2, 3, 5, 4,   # +  0
     2, 2, 2, 0, 0, 2, 2, 2, 2, 2,   # + 10, 14 = TX, 15 = RX
     2, 2, 2, 2, 2, 2, ]             # + 20
 COIL = 1
@@ -29,6 +29,10 @@ SLAVE_ID = 0x00
 OLD_GPIO = [0] * len(GPIO_TABLE)
 GPO_SHIFT = 3
 HEART_BEAT = 1
+try:
+    HEART_BEAT_PIN = GPIO_TABLE.index(5)
+except ValueError:
+    HEART_BEAT_PIN = None
 
 def dump_store(a):
     context  = a[0]
@@ -61,7 +65,9 @@ def heart_beat(a):
     global HEART_BEAT
     context = a[0]
     HEART_BEAT = abs(HEART_BEAT - 1)
-    context[SLAVE_ID].setValues(COIL, 9, [HEART_BEAT, ])
+    context[SLAVE_ID].setValues(COIL, HEART_BEAT_PIN, [HEART_BEAT, ])
+    GPIO.output(HEART_BEAT_PIN, HEART_BEAT)
+    log.debug('Toggle heart beat pin %d => %d', HEART_BEAT_PIN, HEART_BEAT)
 
 
 # Override ModbusSlaveContext to hook our function
@@ -88,7 +94,7 @@ for i in range(len(GPIO_TABLE)):
     elif v == 2: 
         GPIO.setup(i, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         OLD_GPIO[i] = 1
-    elif v == 3:
+    elif v == 3 or v == 5:
         GPIO.setup(i, GPIO.OUT, initial=GPIO.LOW)
         OLD_GPIO[i] = GPO_SHIFT
     elif v == 4:
@@ -117,6 +123,7 @@ loop = LoopingCall(f=dump_store, a=(context,))
 loop.start(10, now=True)
 loop_scan_gpi = LoopingCall(f=scan_gpi)
 loop_scan_gpi.start(0.1, now=True)
-loop_heart_beat = LoopingCall(f=heart_beat, a=(context,))
-loop_heart_beat.start(1, now=True)
+if HEART_BEAT_PIN:
+    loop_heart_beat = LoopingCall(f=heart_beat, a=(context,))
+    loop_heart_beat.start(1, now=True)
 StartTcpServer(context, identity=identity(), address=('192.168.42.1', 502))
