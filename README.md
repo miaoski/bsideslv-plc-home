@@ -29,16 +29,37 @@ Simulated Pump
 ==============
 It is easy to attach a simulated pump to the 2-level honeypot.  For example,
 * Water level reading in IR#4
-* When IR#4 < 5, pull DI#6 (float switch #1) high, thus pulling CO#6 (pump switch) high
+* When IR#4 < 5, pull DI#6 (float switch #1) high, thus pulling CO#11 (pump switch) high
 * Pump moves water into some container, thus increasing the reading of HR#4 (should be IR#4, but I want to make it easier.)
-* When IR#4 > 80, pull DI#7 (float switch #2) high, thus pulling CO#6 (pump switch) low
-* What if someone changes the values of CO#6 ?
+* When IR#4 > 80, pull DI#7 (float switch #2) high, thus pulling CO#11 (pump switch) low
+* What if someone changes the values of CO#11 ?
 * What if someone changes the values of HR#4 ?
 
 
 Heart Beat and Watchdog
 =======================
-`modsrv.py` uses GPO#9 (CO#9) as a heart beat.  The Arduino project in lvdog/ is a simple program that triggers alarm when ModBus server stops beating for 5 or more times.
+`modsrv.py` uses GPO#9 (CO#9) as a heart beat.  The Arduino project in lvdog/ is a simple program that triggers alarm when ModBus server stops beating for 5 or more times.  GPO#9 => Arduino pin2.
+
+
+Demo Board
+==========
+A simple board with 6 switches and 6 LED.  Only for demonstration purpose and added unnecessary complexity.
+
+```
+SW1     DI2 -> CO8
+SW2     DI3 -> CO10
+SW3     DI4
+SW4     DI5
+SW5     DI6  (lower float switch)
+SW6     DI7  (higher float switch)
+
+LED1    CO8  (ModBus #2)
+LED2    CO10 (ModBus #2)
+LED3    tank overflow (GPO25, because it's level-2)
+LED4
+LED5    CO11 (pump running)
+LED6    heart-beat alarm (from Arduino pin13)
+```
 
 
 LICENSE

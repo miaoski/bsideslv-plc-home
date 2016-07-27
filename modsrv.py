@@ -20,7 +20,7 @@ log = logging.getLogger()
 GPIO_TABLE = [ 0,
     0, 1, 2, 2, 2, 2, 2, 3, 5, 4,   # +  0
     2, 2, 2, 0, 0, 2, 2, 2, 2, 2,   # + 10, 14 = TX, 15 = RX
-    2, 2, 2, 2, 2, 2, ]             # + 20
+    2, 2, 2, 2, 3, 2, ]             # + 20
 COIL = 1
 DISCRETE_INPUTS = 2
 HOLDING_REGISTERS = 3
@@ -51,6 +51,12 @@ def scan_gpi():
                 log.info('GPI %d : %d => %d', i, OLD_GPIO[i], v)
                 context[SLAVE_ID].setValues(DISCRETE_INPUTS, i, [v, ])
                 OLD_GPIO[i] = v
+    # DI2 -> CO8
+    context[SLAVE_ID].store['c'].values[8+1] = GPIO.input(2)
+    GPIO.output(8,  GPIO.input(2))
+    # DI3 -> CO10
+    context[SLAVE_ID].store['c'].values[10+1] = GPIO.input(3)
+    GPIO.output(10,  GPIO.input(3))
 
 
 def set_gpo(pin, v):

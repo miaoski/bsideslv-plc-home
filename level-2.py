@@ -3,6 +3,7 @@
 #   Logs when someone calls function 5, 15, 6, 16
 #   Copies data from ModBus #1 every tick, but applies delays and fuzzy functions
 
+import RPi.GPIO as GPIO
 from pymodbus.server.async import StartTcpServer
 from pymodbus.datastore import ModbusSequentialDataBlock
 from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
@@ -30,6 +31,11 @@ ACTIONS = {}        # pile of actions to execute per tick
 s_co = d_co = []    # For debugging
 s_hr = d_hr = []    # For debugging
 context = None      # global
+
+GPIO.setmode(GPIO.BCM)  # For overflow LED
+GPIO.setwarnings(False)
+GPIO.setup(11, GPIO.OUT, initial=GPIO.LOW)
+GPIO.setup(25, GPIO.OUT, initial=GPIO.LOW)
 
 def setvalue(fx, addr, value):
     global context
@@ -126,7 +132,7 @@ hr_inc = lambda x: lambda a,s,d: Incremental(x, a, s, d)
 
 # 1-based
 #               0,      1,      2,      3,      4,      5,      6,      7,      8,      9,     10,     11
-co_change = [None, co_slw, co_dft, co_slw, co_rnd, co_dft, co_ign, co_dft, co_dft, co_ign, co_dft, co_slw]
+co_change = [None, co_slw, co_dft, co_slw, co_rnd, co_dft, co_ign, co_dft, co_dft, co_ign, co_dft, co_ign]
 hr_change = [None, hr_dft, hr_dft, hr_slw, co_ign, hr_pct(0.2), hr_inc(3)]
 
 
@@ -181,7 +187,7 @@ def compare_source(a):
             ACTIONS[act] = hr_change[i](i, s_hr[i+1], d_hr[i+1])
 
 
-# Simulation: Low water on DI#6, high water on DI#7, pump switch on CO#6
+# Simulation: Low water on DI#6, high water on DI#7, pump switch on CO#11
 
 class SimulatedPump(object):
     def __init__(self, reg=4, rate=3):
@@ -201,18 +207,28 @@ class SimulatedPump(object):
 
 def simulated_float_switches():
     global ACTIONS
-    if getdi(6) == 1 and getdi(7) == 1 and getco(6) == 0:
-        log.info('Pull CO#6 high to start the pump')
-        setvalue(1, 6, 1)
-    if getdi(7) == 0 and getco(6) == 1:
-        log.info('Pull CO#6 low to stop the pump')
-        setvalue(1, 6, 0)
-    if getco(6) == 1 and 'h4' not in ACTIONS:
+    if getdi(6) == 1 and getdi(7) == 1 and getco(11) == 0:
+        log.info('Pull CO#11 high to start the pump')
+        setvalue(1, 11, 1)
+        GPIO.output(11, 1)
+    if getdi(7) == 0 and getco(11) == 1:
+        log.info('Pull CO#11 low to stop the pump')
+        setvalue(1, 11, 0)
+        GPIO.output(11, 0)
+    if getco(11) == 1 and 'h4' not in ACTIONS:
         ACTIONS['h4'] = SimulatedPump(reg=4, rate=3)
         log.info('Pump started')
-    if getco(6) == 0 and 'h4' in ACTIONS:
+    if getco(11) == 0 and 'h4' in ACTIONS:
         del(ACTIONS['h4'])
         log.info('Pump stopped')
+
+
+def check_water_level():
+    if gethr(4) > 100:
+        GPIO.output(25, 1)
+    else:
+        GPIO.output(25, 0)
+
 
 
 def tick():
@@ -221,6 +237,7 @@ def tick():
     GMTICK += 1
     simulated_float_switches()
     dump_memory()
+    check_water_level()
 
 
 # Override ModbusSlaveContext to hook our function
